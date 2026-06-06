@@ -1,8 +1,6 @@
-# main.py
 from fastapi import FastAPI
 from pydantic import BaseModel
 from graph import graph
-
 
 app = FastAPI()
 
@@ -25,13 +23,14 @@ def health():
 
 @app.post("/webhook")
 async def whatsapp_webhook(payload: WhatsAppPayload):
-    # LangGraph invoke karo
+    # LangGraph invoke karo with history (graph automatically handles memory)
     result = graph.invoke({
-    "sender": payload.sender,
-    "message": payload.message,
-    "messageType": payload.messageType
+        "sender": payload.sender,
+        "message": payload.message,
+        "messageType": payload.messageType,
+        "reply": "",  # Empty initially
+        "history": []  # Empty initially, graph will manage it
     })
-
+    
     # Reply return karo — Baileys ye padhega aur WhatsApp per bhejena
     return {"reply": result['reply']}
- 
