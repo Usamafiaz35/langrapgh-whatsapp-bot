@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from graph import graph
 
+
 app = FastAPI()
 
 # Baileys se aane wala payload ka format
@@ -19,9 +20,9 @@ class WhatsAppPayload(BaseModel):
 async def whatsapp_webhook(payload: WhatsAppPayload):
     # LangGraph invoke karo
     result = graph.invoke({
-        "sender": payload.sender,
-        "message": payload.message,
-        "reply": ""
+    "sender": payload.sender,
+    "message": payload.message,
+    "messageType": payload.messageType
     })
 
     # Reply return karo — Baileys ye padhega aur WhatsApp per bhejena
