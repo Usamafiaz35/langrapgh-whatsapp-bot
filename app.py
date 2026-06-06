@@ -28,7 +28,7 @@ async def whatsapp_webhook(payload: WhatsAppPayload):
         "sender": payload.sender,
         "message": payload.message,
         "messageType": payload.messageType,
-        "reply": "",  # Empty initially
+        "reply": "",  
         "history": []  # Empty initially, graph will manage it
     })
     
