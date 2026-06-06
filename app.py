@@ -15,6 +15,13 @@ class WhatsAppPayload(BaseModel):
     messageTimestamp: int = 0
     messageType: str = "text"
     message: str = ""
+#-------------------------------------------------------
+
+@app.get("/")
+def health():
+    return {"status": "LangGraph server running ✅"}
+
+#-------------------------------------------------------
 
 @app.post("/webhook")
 async def whatsapp_webhook(payload: WhatsAppPayload):
@@ -26,8 +33,5 @@ async def whatsapp_webhook(payload: WhatsAppPayload):
     })
 
     # Reply return karo — Baileys ye padhega aur WhatsApp per bhejena
-    return {"reply": result["reply"]}
-
-@app.get("/")
-def health():
-    return {"status": "LangGraph server running ✅"}
+    return {"reply": result['reply']}
+ 
