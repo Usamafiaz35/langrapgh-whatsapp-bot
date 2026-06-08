@@ -22,8 +22,9 @@ https://your-domain.com/webhook
 ---
 
 ### Step 2: Start LangGraph Server
+1-make .env file in your project folder and paste your openai key like in .env.example
 
-Open a **second terminal** and run the following command:
+2-Open a **second terminal** and run the following command:
 
 ```bash
 uvicorn app:app --reload
