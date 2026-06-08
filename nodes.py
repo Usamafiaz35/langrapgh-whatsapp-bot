@@ -1,46 +1,18 @@
-from langgraph.graph import StateGraph, END, START
-from langchain_openai import ChatOpenAI
-from dotenv import load_dotenv
-from typing import List, TypedDict, Literal, Dict, Any
+from state import MessageState
 from pydantic import BaseModel, Field
 from langchain_core.prompts import ChatPromptTemplate
-from openai import OpenAI
+from utility_func import get_user_history, update_user_history
 import base64
 import tempfile
 import os
-
-from state import MessageState
-
-load_dotenv()
-llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
-client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+from models import client, llm
 
 
 
-#---------------------Utility Function Memory-------------------------------
-user_memories: Dict[str, List[Dict[str, str]]] = {}
 
-def get_user_history(sender: str, limit: int = 10) -> List[Dict[str, str]]:
-    """Get last N messages for a specific user"""
-    if sender not in user_memories:
-        user_memories[sender] = []
-    return user_memories[sender][-limit:]
+#----------------------Node 1 (receive_message)----------------------------
 
-def update_user_history(sender: str, user_msg: str, ai_reply: str):
-    """Update user's conversation history"""
-    if sender not in user_memories:
-        user_memories[sender] = []
-    
-    user_memories[sender].append({"role": "user", "content": user_msg})
-    user_memories[sender].append({"role": "assistant", "content": ai_reply})
-    
-    # Keep only last 20 messages (10 exchanges)
-    if len(user_memories[sender]) > 20:
-        user_memories[sender] = user_memories[sender][-20:]
-
-#----------------------------------------------------------------------------
-
-# Node 1: Message receive
+# Message receive
 def receive_message(state: MessageState) -> MessageState:
     return state
 
@@ -50,11 +22,9 @@ def route_message(state: MessageState) -> str:
     if state.get("messageType") == "audioMessage":
         return "voice"
     return "text"
+#--------------------------Node 2 (process_message) ---------------------------------------
 
-#----------------------------------------------------------------------------
-
-
-# Node 2a: Text process Ai Response
+# Text process Ai Response
 class Response(BaseModel):
     response: str = Field(  
         ...,
@@ -140,9 +110,9 @@ def process_message(state: MessageState):
     
     return {"reply_msg": response.response, "history": get_user_history(sender)}
 
-#---------------------------------------------------------------------------------
+#---------------------------------Node 3 (transcribe_audio_node)------------------------------------------------
 
-# Audio base 64 ko transcribe karne wala node
+# Transcribe Audio_base_64 file
 
 def transcribe_audio_node(state: MessageState):
     """
@@ -179,7 +149,7 @@ def transcribe_audio_node(state: MessageState):
     return {"transcript": transcript}                          
 
 
-#----
+#--------------------------Node 4 (process_message_audio)---------------------------------------
 class Response(BaseModel):
     response: str = Field(
         ...,
@@ -267,11 +237,7 @@ def process_message_audio(state: MessageState):
 
 
 
-
-
-
-
-#-----
+#--------------------------Node 5 (text_to_speech_node)---------------------------------------
 
 def text_to_speech_node(state: MessageState):
     """
@@ -306,48 +272,8 @@ def text_to_speech_node(state: MessageState):
     }
 
 
-
-#----------------------------------------------------------------------------------
+#--------------------------Node 6 (send_reply)---------------------------------------
 
 # Node 3: Reply ready
 def send_reply(state: MessageState) -> MessageState:
     return state
-
-#---------------------------------------------------------------------------------
-
-# Graph--------
-builder = StateGraph(MessageState)
-
-# Nodes -------
-builder.add_node("receive_message", receive_message)
-builder.add_node("process_message", process_message) 
-
-builder.add_node("transcribe_audio_node", transcribe_audio_node)
-builder.add_node("process_message_audio", process_message_audio)
-builder.add_node("text_to_speech_node", text_to_speech_node)
-builder.add_node("send_reply", send_reply)
- 
-
-
-# Edges---------------
-builder.add_edge(START,"receive_message")
-
-builder.add_conditional_edges(
-    "receive_message",
-    route_message,
-    {
-        "text": "process_message",
-        "voice": "transcribe_audio_node",
-    }
-)
-
-builder.add_edge("process_message", "send_reply")
-builder.add_edge("send_reply", END)
-
-
-builder.add_edge("transcribe_audio_node", "process_message_audio")
-builder.add_edge("process_message_audio", "text_to_speech_node")
-builder.add_edge("text_to_speech_node", "send_reply")
-builder.add_edge("send_reply", END)
-
-graph = builder.compile()
