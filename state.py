@@ -1,5 +1,6 @@
 from typing import List, TypedDict, Literal, Dict, Any
 
+#-----------State For Langgraph------------------------
 class MessageState(TypedDict):
     sender: str
     message: str
@@ -16,3 +17,4 @@ class MessageState(TypedDict):
     response_mimetype: str
 
     history: List[Dict[str, str]]
+

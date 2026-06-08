@@ -1,34 +1,20 @@
 from fastapi import FastAPI
 from fastapi.responses import Response
-from pydantic import BaseModel
+from schemas import WhatsAppPayload
 from main import graph
-from typing import Optional
+
 
 app = FastAPI()
 
-class MediaPayload(BaseModel):
-    type: str
-    mimetype: Optional[str] = None
-    fileName: Optional[str] = None
-    caption: Optional[str] = None
-    seconds: Optional[int] = None
-    ptt: bool = False
-    base64: str = ""
 
-class WhatsAppPayload(BaseModel):
-    sender: str
-    senderName: str = ""
-    replyToJid: str
-    messageId: str = ""
-    messageTimestamp: int = 0
-    messageType: str = "text"
-    message: str = ""
-    media: Optional[MediaPayload] = None
+#-----------------Routes-------------------------
 
 @app.get("/")
 def health():
     return {"status": "LangGraph server running ✅"}
 
+
+#----------------- Main Route----------------------
 @app.post("/webhook")
 async def whatsapp_webhook(payload: WhatsAppPayload):
     if payload.messageType == "audioMessage":
