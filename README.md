@@ -1,6 +1,6 @@
 # WhatsApp Server in LangGraph
 
-This project connects a WhatsApp server (using Baileys) with a LangGraph backend to process incoming messages.
+This project connects a WhatsApp server (using Baileys) with a LangGraph backend to process incoming messages and Voices with memory.
 
 ---
 
